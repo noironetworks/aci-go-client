@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"strconv"
+	"time"
 
 	"github.com/ciscoecosystem/aci-go-client/container"
 	"github.com/ciscoecosystem/aci-go-client/models"
@@ -32,7 +33,7 @@ func (sm *ServiceManager) Get(dn string) (*container.Container, error) {
 	}
 
 	obj, _, err := sm.client.Do(req)
-	fmt.Println(obj)
+	//fmt.Println(obj)
 	if err != nil {
 		return nil, err
 	}
@@ -61,9 +62,9 @@ func (sm *ServiceManager) Save(obj models.Model) error {
 	if err != nil {
 		return err
 	}
-	fmt.Println("MO" + sm.MOURL)
-	fmt.Println(sm.client)
-	fmt.Println(jsonPayload.String())
+	//fmt.Println("MO" + sm.MOURL)
+	//fmt.Println(sm.client)
+	//fmt.Println(jsonPayload.String())
 	req, err := sm.client.MakeRestRequest("POST", fmt.Sprintf("%s.json", sm.MOURL), jsonPayload, true)
 	if err != nil {
 		return err
@@ -115,8 +116,8 @@ func (sm *ServiceManager) Delete(obj models.Model) error {
 	if err != nil {
 		return err
 	}
-	fmt.Println(sm.MOURL)
-	fmt.Println(sm.client)
+	//fmt.Println(sm.MOURL)
+	//fmt.Println(sm.client)
 
 	jsonPayload.Set("deleted", className, "attributes", "status")
 	req, err := sm.client.MakeRestRequest("POST", fmt.Sprintf("%s.json", sm.MOURL), jsonPayload, true)
@@ -128,24 +129,37 @@ func (sm *ServiceManager) Delete(obj models.Model) error {
 	if err != nil {
 		return err
 	}
-	fmt.Printf("%+v", cont)
+	_ = cont
+	//fmt.Printf("%+v", cont)
 
 	return nil
 }
 
 func (sm *ServiceManager) GetViaURL(url string) (*container.Container, error) {
 	req, err := sm.client.MakeRestRequest("GET", url, nil, true)
-
 	if err != nil {
 		return nil, err
 	}
-
 	obj, _, err := sm.client.Do(req)
-	fmt.Println(obj)
-	if err != nil {
-		return nil, err
+	//fmt.Println(obj)
+	maxAttempted := false
+	if err != nil || obj == nil {
+		//attempt  again
+		for attempt := 0; attempt < 5; attempt++ {
+			obj, _, err = sm.client.Do(req)
+			if err == nil || obj != nil || attempt == 5 {
+				if attempt == 5 {
+					maxAttempted = true
+				}
+				break
+			}
+			time.Sleep(time.Second * 1)
+		}
 	}
 
+	if maxAttempted {
+		return nil, errors.New("Max request attempted")
+	}
 	if obj == nil {
 		return nil, errors.New("Empty response body")
 	}
@@ -173,11 +187,34 @@ func (sm *ServiceManager) DeleteByDn(dn, className string) error {
 		return err
 	}
 
+
+
 	cont, _, err := sm.client.Do(req)
+
+	maxAttempted := false
 	if err != nil {
+		//attempt  again
+		for attempt := 0; attempt < 5; attempt++ {
+			cont, _, err = sm.client.Do(req)
+			if err == nil || attempt == 5 {
+				if attempt == 5 {
+					maxAttempted = true
+				}
+				break
+			}
+			time.Sleep(time.Second * 1)
+		}
+	}
+
+	//if maxAttempted {
+	//	return errors.New("Max request attempted")
+	//}
+
+	if err != nil || maxAttempted {
 		return err
 	}
-	fmt.Printf("%+v", cont)
+	_ = cont
+	//fmt.Printf("%+v", cont)
 
 	return nil
 

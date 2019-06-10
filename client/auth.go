@@ -45,9 +45,9 @@ func (client *Client) InjectAuthenticationHeader(req *http.Request, path string)
 
 	if client.password != "" {
 		if client.AuthToken == nil || !client.AuthToken.IsValid() {
-			fmt.Println(client)
+			//fmt.Println(client)
 			err := client.Authenticate()
-			fmt.Println(client)
+			//fmt.Println(client)
 			if err != nil {
 				return nil, err
 			}
@@ -71,11 +71,11 @@ func (client *Client) InjectAuthenticationHeader(req *http.Request, path string)
 			contentStr = fmt.Sprintf("%s%s", req.Method, path)
 
 		}
-		fmt.Println("Content " + contentStr)
+		//fmt.Println("Content " + contentStr)
 		content := []byte(contentStr)
 
 		signature, err := createSignature(content, client.privatekey)
-		fmt.Println("sig" + signature)
+		//fmt.Println("sig" + signature)
 		if err != nil {
 			return req, err
 		}

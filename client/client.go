@@ -6,9 +6,12 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
+	"io/ioutil"
 	"log"
 	"net/http"
 	"net/url"
+	"os"
 	"strconv"
 	"strings"
 	"time"
@@ -46,6 +49,11 @@ type Client struct {
 var clientImpl *Client
 
 type Option func(*Client)
+
+//suppress log output on console
+type LogWriter struct{ io.Writer }
+func (w *LogWriter) Enable()  { w.Writer = os.Stdout }
+func (w *LogWriter) Disable() { w.Writer = ioutil.Discard }
 
 func Insecure(insecure bool) Option {
 	return func(client *Client) {
@@ -185,7 +193,7 @@ func (c *Client) Authenticate() error {
 		return err
 	}
 
-	fmt.Println(body.String())
+	//fmt.Println(body.String())
 	req, err := c.MakeRestRequest(method, path, body, false)
 	obj, _, err := c.Do(req)
 
@@ -234,18 +242,19 @@ func (c *Client) Do(req *http.Request) (*container.Container, *http.Response, er
 		return nil, nil, err
 	}
 
-	fmt.Printf("\nHTTP Request: %s %s \n", req.Method, req.URL.String())
-	fmt.Printf("\nHTTP Response: %d %s \n", resp.StatusCode, resp.Status)
+	//fmt.Printf("\nHTTP Request: %s %s \n", req.Method, req.URL.String())
+	//fmt.Printf("\nHTTP Response: %d %s \n", resp.StatusCode, resp.Status)
 
 	decoder := json.NewDecoder(resp.Body)
 	obj, err := container.ParseJSONDecoder(decoder)
 	resp.Body.Close()
 
 	if err != nil {
-		fmt.Println("Error occurred.")
+		//fmt.Println("Error occurred.")
 		return nil, resp, err
 	}
-
+	//fmt.Printf("\nHTTP Req: %s \n", req)
+	//fmt.Printf("\nHTTP Obj: %s \n", obj)
 	return obj, resp, err
 }
 
