@@ -3,10 +3,8 @@ package client
 import (
 	"bytes"
 	"crypto/tls"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -109,15 +107,15 @@ func initClient(clientUrl, username string, options ...Option) *Client {
 		option(client)
 	}
 
-	if client.insecure {
-		transport = client.useInsecureHTTPClient()
-	}
+	transport = client.useInsecureHTTPClient(client.insecure)
 	if client.proxyUrl != "" {
 		transport = client.configProxy(transport)
 	}
+
 	client.httpClient = &http.Client{
 		Transport: transport,
 	}
+
 	client.ServiceManager = NewServiceManager(client.MOURL, client)
 	return client
 }
@@ -138,18 +136,21 @@ func (c *Client) configProxy(transport *http.Transport) *http.Transport {
 	return transport
 
 }
-func (c *Client) useInsecureHTTPClient() *http.Transport {
+func (c *Client) useInsecureHTTPClient(insecure bool) *http.Transport {
 	// proxyUrl, _ := url.Parse("http://10.0.1.167:3128")
 	transport := &http.Transport{
 		TLSClientConfig: &tls.Config{
 			CipherSuites: []uint16{
 				tls.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,
 				tls.TLS_ECDHE_RSA_WITH_AES_256_CBC_SHA,
+				tls.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA256,
+				tls.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
+				tls.TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384,
 			},
 			PreferServerCipherSuites: true,
-			InsecureSkipVerify:       true,
+			InsecureSkipVerify:       insecure,
 			MinVersion:               tls.VersionTLS11,
-			MaxVersion:               tls.VersionTLS11,
+			MaxVersion:               tls.VersionTLS12,
 		},
 	}
 
@@ -165,12 +166,16 @@ func (c *Client) MakeRestRequest(method string, path string, body *container.Con
 	}
 
 	fURL := c.BaseURL.ResolveReference(url)
-
-	req, err := http.NewRequest(method, fURL.String(), bytes.NewBuffer(body.Bytes()))
-
+	var req *http.Request
+	if method == "GET" {
+		req, err = http.NewRequest(method, fURL.String(), nil)
+	} else {
+		req, err = http.NewRequest(method, fURL.String(), bytes.NewBuffer((body.Bytes())))
+	}
 	if err != nil {
 		return nil, err
 	}
+	log.Printf("HTTP request %s %s %v", method, path, req)
 
 	if authenticated {
 
@@ -179,6 +184,7 @@ func (c *Client) MakeRestRequest(method string, path string, body *container.Con
 			return req, err
 		}
 	}
+	log.Printf("HTTP request after injection %s %s %v", method, path, req)
 
 	return req, nil
 }
@@ -236,26 +242,29 @@ func StrtoInt(s string, startIndex int, bitSize int) (int64, error) {
 
 }
 func (c *Client) Do(req *http.Request) (*container.Container, *http.Response, error) {
-
+	log.Printf("[DEBUG] Begining DO method %s", req.URL.String())
 	resp, err := c.httpClient.Do(req)
 	if err != nil {
 		return nil, nil, err
 	}
+	log.Printf("\n\n\n HTTP request: %v", req.Body)
+	log.Printf("\nHTTP Request: %s %s", req.Method, req.URL.String())
+	log.Printf("nHTTP Response: %d %s %v", resp.StatusCode, resp.Status, resp)
 
-	//fmt.Printf("\nHTTP Request: %s %s \n", req.Method, req.URL.String())
-	//fmt.Printf("\nHTTP Response: %d %s \n", resp.StatusCode, resp.Status)
-
-	decoder := json.NewDecoder(resp.Body)
-	obj, err := container.ParseJSONDecoder(decoder)
+	bodyBytes, err := ioutil.ReadAll(resp.Body)
+	bodyStr := string(bodyBytes)
 	resp.Body.Close()
+	log.Printf("\n HTTP response unique string %s %s %s", req.Method, req.URL.String(), bodyStr)
+	obj, err := container.ParseJSON(bodyBytes)
 
 	if err != nil {
-		//fmt.Println("Error occurred.")
+		fmt.Println("Error occurred.")
+		log.Printf("Error occured while json parsing %+v", err)
 		return nil, resp, err
 	}
-	//fmt.Printf("\nHTTP Req: %s \n", req)
-	//fmt.Printf("\nHTTP Obj: %s \n", obj)
+	log.Printf("[DEBUG] Exit from do method")
 	return obj, resp, err
+
 }
 
 func stripQuotes(word string) string {
