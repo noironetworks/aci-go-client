@@ -77,7 +77,7 @@ func (sm *ServiceManager) CreateRelationSpanRsSrcToPathEp( parentDn, tDn string)
 	containerJSON := []byte(fmt.Sprintf(`{
 		"%s": {
 			"attributes": {
-				"dn": "%s"				
+				"dn": "%s"
 			}
 		}
 	}`, "spanRsSrcToPathEp", dn))
@@ -108,7 +108,7 @@ func (sm *ServiceManager) CreateRelationSpanRsSrcToVPort( parentDn, tDn string) 
 	containerJSON := []byte(fmt.Sprintf(`{
 		"%s": {
 			"attributes": {
-				"dn": "%s"				
+				"dn": "%s"
 			}
 		}
 	}`, "spanRsSrcToVPort", dn))

@@ -12,7 +12,7 @@ type SpanRsSrcToVPort struct {
 	BaseAttributes
 	SpanRsSrcToVPortAttributes
 }
-  
+
 type SpanRsSrcToVPortAttributes struct {
 	State             string `json:",omitempty"`
 	Tdn               string `json:",omitempty"`

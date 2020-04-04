@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"errors"
 	"fmt"
+	"io"
 	"io/ioutil"
 	"log"
 	"net/http"
@@ -199,7 +200,7 @@ func (c *Client) Authenticate() error {
 		return err
 	}
 
-	//fmt.Println(body.String())
+	fmt.Println(body.String())
 	req, err := c.MakeRestRequest(method, path, body, false)
 	obj, _, err := c.Do(req)
 

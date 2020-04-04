@@ -46,9 +46,9 @@ func (client *Client) InjectAuthenticationHeader(req *http.Request, path string)
 	log.Printf("[DEBUG] Begin Injection")
 	if client.password != "" {
 		if client.AuthToken == nil || !client.AuthToken.IsValid() {
-			//fmt.Println(client)
+			fmt.Println(client)
 			err := client.Authenticate()
-			//fmt.Println(client)
+			fmt.Println(client)
 			if err != nil {
 				return nil, err
 			}

@@ -62,9 +62,9 @@ func (sm *ServiceManager) Save(obj models.Model) error {
 	if err != nil {
 		return err
 	}
-	//fmt.Println("MO" + sm.MOURL)
-	//fmt.Println(sm.client)
-	//fmt.Println(jsonPayload.String())
+	fmt.Println("MO" + sm.MOURL)
+	fmt.Println(sm.client)
+	fmt.Println(jsonPayload.String())
 	req, err := sm.client.MakeRestRequest("POST", fmt.Sprintf("%s.json", sm.MOURL), jsonPayload, true)
 	if err != nil {
 		return err
@@ -116,8 +116,8 @@ func (sm *ServiceManager) Delete(obj models.Model) error {
 	if err != nil {
 		return err
 	}
-	//fmt.Println(sm.MOURL)
-	//fmt.Println(sm.client)
+	fmt.Println(sm.MOURL)
+	fmt.Println(sm.client)
 
 	jsonPayload.Set("deleted", className, "attributes", "status")
 	req, err := sm.client.MakeRestRequest("POST", fmt.Sprintf("%s.json", sm.MOURL), jsonPayload, true)
@@ -137,9 +137,11 @@ func (sm *ServiceManager) Delete(obj models.Model) error {
 
 func (sm *ServiceManager) GetViaURL(url string) (*container.Container, error) {
 	req, err := sm.client.MakeRestRequest("GET", url, nil, true)
+
 	if err != nil {
 		return nil, err
 	}
+
 	obj, _, err := sm.client.Do(req)
 	log.Printf("Getvia url %+v", obj)
 	if err != nil {
@@ -194,10 +196,6 @@ func (sm *ServiceManager) DeleteByDn(dn, className string) error {
 			time.Sleep(time.Second * 1)
 		}
 	}
-
-	//if maxAttempted {
-	//	return errors.New("Max request attempted")
-	//}
 
 	if err != nil || maxAttempted {
 		return err

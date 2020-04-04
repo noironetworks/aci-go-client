@@ -2,6 +2,8 @@ package models
 
 import (
 	"encoding/json"
+	"fmt"
+
 	"github.com/ciscoecosystem/aci-go-client/container"
 )
 
@@ -45,6 +47,6 @@ func (ba *BaseAttributes) ToMap() (map[string]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	//fmt.Printf("%+v", cont)
+	fmt.Printf("%+v", cont)
 	return toStringMap(cont.Data()), nil
 }
